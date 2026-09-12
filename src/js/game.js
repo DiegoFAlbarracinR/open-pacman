@@ -13,6 +13,12 @@ const OPPOSITE = { left: 'right', right: 'left', up: 'down', down: 'up' };
 const PACMAN_SPEED = 0.125; // 1/8 celda/frame -> alinea cada 8 frames
 const GHOST_SPEED = 0.1;    // 1/10 celda/frame
 
+// Salida escalonada del pen: frames (a 60 fps) en que cada fantasma sale,
+// por indice en GHOST_STARTS (0=Blinky, 1=Pinky, 2=Inky, 3=Clyde).
+const GHOST_RELEASE_TIMES = [ 0, 180, 360, 540 ];
+// Celda de salida del pen: encima de la puerta, fuera del pen.
+const GHOST_EXIT_CELL = { x: 14, y: 11 };
+
 // Crea una partida nueva. Copia MAZE (pristino) a game.grid para poder comer
 // dots sin destruir el original, y reiniciar.
 function createGame() {
@@ -29,6 +35,7 @@ function createGame() {
     lives: 3,
     dotsRemaining: dots,
     grid,
+    ghostReleaseTimer: 0,  // frames desde el inicio de la partida
     pacman: {
       x: PACMAN_START.x,
       y: PACMAN_START.y,
@@ -146,6 +153,17 @@ function collides( a, b ) {
 }
 
 function update( game ) {
+  if ( game.state === 'playing' ) game.ghostReleaseTimer++;
+
+  // Salida escalonada del pen segun ghostReleaseTimer.
+  game.ghosts.forEach( ( g, i ) => {
+    if ( g.inPen && game.ghostReleaseTimer >= GHOST_RELEASE_TIMES[ i ] ) {
+      g.inPen = false;
+      g.x = GHOST_EXIT_CELL.x;
+      g.y = GHOST_EXIT_CELL.y;
+    }
+  } );
+
   movePacman( game );
   game.ghosts.forEach( ( g ) => moveGhost( game, g ) );
 
