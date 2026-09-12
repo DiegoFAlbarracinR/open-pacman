@@ -1,6 +1,6 @@
 # SPEC 01 — Cuatro fantasmas con personalidad propia
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** ninguno
 > **Fecha:** 2026-09-12
 > **Objetivo:** Dotar al juego de 4 fantasmas con IA propia (Blinky, Pinky, Inky, Clyde), siendo Blinky el que persigue agresivamente a Pac-Man.
@@ -66,14 +66,14 @@ const GHOST_COLORS = {
 
 ## Acceptance criteria
 
-- [ ] Al iniciar partida aparecen exactamente 4 fantasmas: rojo, rosa, cian y naranja, uno de cada color.
-- [ ] El rojo persigue agresivamente a Pac-Man, aproximándose por el camino de menor distancia Manhattan.
-- [ ] El rosa se dirige a la zona 4 celdas por delante de la dirección de Pac-Man, no a su posición.
-- [ ] El cian no duplica la trayectoria del rojo ni del rosa; su ruta depende de Blinky y Pac-Man a la vez.
-- [ ] El naranja deja de perseguir y elige direcciones erráticas cuando está a ≤ 8 celdas de Pac-Man; persigue cuando está más lejos.
-- [ ] Mecánicas previas intactas: comer dots suma 10 puntos, vidas, estados start/playing/won/lost, túnel por la fila 14.
-- [ ] La consola del navegador no muestra errores.
-- [ ] La partida se puede ganar (`won`) y perder (`lost`) igual que antes.
+- [x] Al iniciar partida aparecen exactamente 4 fantasmas: rojo, rosa, cian y naranja, uno de cada color.
+- [x] El rojo persigue agresivamente a Pac-Man, aproximándose por el camino de menor distancia Manhattan.
+- [x] El rosa se dirige a la zona 4 celdas por delante de la dirección de Pac-Man, no a su posición.
+- [x] El cian no duplica la trayectoria del rojo ni del rosa; su ruta depende de Blinky y Pac-Man a la vez.
+- [x] El naranja deja de perseguir y elige direcciones erráticas cuando está a ≤ 8 celdas de Pac-Man; persigue cuando está más lejos.
+- [x] Mecánicas previas intactas: comer dots suma 10 puntos, vidas, estados start/playing/won/lost, túnel por la fila 14.
+- [x] La consola del navegador no muestra errores.
+- [x] La partida se puede ganar (`won`) y perder (`lost`) igual que antes.
 
 Verificación manual (no hay tooling): abrir `src/index.html` y observar los 4 comportamientos.
 
