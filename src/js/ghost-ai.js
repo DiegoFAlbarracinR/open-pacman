@@ -22,6 +22,17 @@ function ghostTarget( game, g ) {
     if ( !isBlockingCell( game.grid, tx, ty ) ) return { x: tx, y: ty };
   }
 
+  if ( g.kind === 'cutter' ) {
+    // pivot = 2 celdas por delante de Pac-Man; objetivo = 2·pivot - Blinky.
+    const d = DIRS[ game.pacman.dir ];
+    const pivotX = px + d.x * 2;
+    const pivotY = py + d.y * 2;
+    const blinky = game.ghosts.find( ( other ) => other.kind === 'hunter' );
+    const tx = 2 * pivotX - Math.round( blinky.x );
+    const ty = 2 * pivotY - Math.round( blinky.y );
+    if ( !isBlockingCell( game.grid, tx, ty ) ) return { x: tx, y: ty };
+  }
+
   return { x: px, y: py };
 }
 
@@ -35,7 +46,7 @@ function decideGhost( game, g ) {
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
 
   // Cualquier kind sin IA propia aun cae en el fallback aleatorio.
-  if ( g.kind !== 'hunter' && g.kind !== 'ambusher' ) {
+  if ( g.kind !== 'hunter' && g.kind !== 'ambusher' && g.kind !== 'cutter' ) {
     g.dir = choices[ Math.floor( Math.random() * choices.length ) ];
     return;
   }
