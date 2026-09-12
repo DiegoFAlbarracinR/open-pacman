@@ -122,6 +122,9 @@ function moveGhost( game, g ) {
   const grid = game.grid;
   const width = grid[ 0 ].length;
 
+  // Fantasma dentro del pen: estatico, no se mueve ni cambia de direccion.
+  if ( g.inPen ) return;
+
   if ( aligned( g.x ) && aligned( g.y ) ) {
     g.x = Math.round( g.x );
     g.y = Math.round( g.y );
