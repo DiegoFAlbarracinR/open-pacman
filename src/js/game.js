@@ -13,6 +13,12 @@ const OPPOSITE = { left: 'right', right: 'left', up: 'down', down: 'up' };
 const PACMAN_SPEED = 0.125; // 1/8 celda/frame -> alinea cada 8 frames
 const GHOST_SPEED = 0.1;    // 1/10 celda/frame
 
+const FRIGHTENED_DURATION = 360; // 6 s a 60 fps
+const FRIGHTENED_SPEED    = 0.06; // mas lento que GHOST_SPEED (0.1)
+
+const GHOST_RESPAWN_TIME = 180;  // 3 s dentro del pen
+const GHOST_POINTS       = [ 200, 400, 800, 1600 ];
+
 // Salida escalonada del pen: frames (a 60 fps) en que cada fantasma sale,
 // por indice en GHOST_STARTS (0=Blinky, 1=Pinky, 2=Inky, 3=Clyde).
 const GHOST_RELEASE_TIMES = [ 0, 180, 360, 540 ];
@@ -27,7 +33,7 @@ function createGame() {
   grid[ PACMAN_START.y ][ PACMAN_START.x ] = 0;
 
   let dots = 0;
-  for ( const row of grid ) for ( const v of row ) if ( v === 2 ) dots++;
+  for ( const row of grid ) for ( const v of row ) if ( v === 2 || v === 4 ) dots++;
 
   return {
     state: 'start',
@@ -36,6 +42,8 @@ function createGame() {
     dotsRemaining: dots,
     grid,
     ghostReleaseTimer: 0,  // frames desde el inicio de la partida
+    frightenedTimer: 0,    // frames restantes del modo fugitivo
+    ghostScoreMult: 1,     // 1,2,4,8 segun fantasmas comidos con el mismo pellet
     pacman: {
       x: PACMAN_START.x,
       y: PACMAN_START.y,
@@ -50,6 +58,7 @@ function createGame() {
       speed: GHOST_SPEED,
       kind: g.kind,
       inPen: true,   // nuevo — arranca dentro del pen, estático
+      respawnTimer: 0, // frames restantes dentro del pen tras ser comido
     } ) ),
   };
 }
@@ -102,11 +111,17 @@ function movePacman( game ) {
       p.dir = p.nextDir;
       p.nextDir = null;
     }
-    // Comer dot.
+    // Comer dot o power pellet.
     if ( grid[ p.y ][ p.x ] === 2 ) {
       grid[ p.y ][ p.x ] = 0;
       game.score += 10;
       game.dotsRemaining--;
+    } else if ( grid[ p.y ][ p.x ] === 4 ) {
+      grid[ p.y ][ p.x ] = 0;
+      game.score += 50;
+      game.dotsRemaining--;
+      game.frightenedTimer = FRIGHTENED_DURATION;
+      game.ghostScoreMult = 1;
     }
     // Si no puede seguir, se detiene en la celda.
     if ( !canMove( grid, p.x, p.y, p.dir, 'pacman' ) ) return;
@@ -133,8 +148,10 @@ function moveGhost( game, g ) {
   }
 
   const d = DIRS[ g.dir ];
-  g.x += d.x * g.speed;
-  g.y += d.y * g.speed;
+  // En modo fugitivo los fantasmas se mueven mas lento.
+  const speed = game.frightenedTimer > 0 ? FRIGHTENED_SPEED : g.speed;
+  g.x += d.x * speed;
+  g.y += d.y * speed;
   wrapTunnel( g, width );
 }
 
@@ -158,9 +175,22 @@ function collides( a, b ) {
 function update( game ) {
   if ( game.state === 'playing' ) game.ghostReleaseTimer++;
 
-  // Salida escalonada del pen segun ghostReleaseTimer.
+  // Decaer el modo fugitivo.
+  if ( game.frightenedTimer > 0 ) game.frightenedTimer--;
+
+// Salida escalonada del pen segun ghostReleaseTimer. Un fantasma comido
+  // (respawnTimer > 0) no sale por el release global: lo gobierna su propio
+  // temporizador de reaparicion.
   game.ghosts.forEach( ( g, i ) => {
-    if ( g.inPen && game.ghostReleaseTimer >= GHOST_RELEASE_TIMES[ i ] ) {
+    if ( g.respawnTimer > 0 ) {
+      g.respawnTimer--;
+      if ( g.respawnTimer <= 0 ) {
+        g.respawnTimer = 0;
+        g.inPen = false;
+        g.x = GHOST_EXIT_CELL.x;
+        g.y = GHOST_EXIT_CELL.y;
+      }
+    } else if ( g.inPen && game.ghostReleaseTimer >= GHOST_RELEASE_TIMES[ i ] ) {
       g.inPen = false;
       g.x = GHOST_EXIT_CELL.x;
       g.y = GHOST_EXIT_CELL.y;
@@ -170,16 +200,29 @@ function update( game ) {
   movePacman( game );
   game.ghosts.forEach( ( g ) => moveGhost( game, g ) );
 
-  for ( const g of game.ghosts ) {
-    if ( collides( game.pacman, g ) ) {
+  for ( let i = 0; i < game.ghosts.length; i++ ) {
+    const g = game.ghosts[ i ];
+    if ( !collides( game.pacman, g ) ) continue;
+
+    // Modo fugitivo: Pac-Man se come al fantasma.
+    if ( game.frightenedTimer > 0 ) {
+      const pen = GHOST_STARTS[ i ];
+      game.score += GHOST_POINTS[ 0 ] * game.ghostScoreMult;
+      game.ghostScoreMult *= 2;
+      g.respawnTimer = GHOST_RESPAWN_TIME;
+      g.inPen = true;
+      g.x = pen.x;
+      g.y = pen.y;
+      g.dir = 'up';
+    } else {
       game.lives--;
       if ( game.lives <= 0 ) {
         game.state = 'lost';
         return;
       }
       resetPositions( game );
-      break;
     }
+    break;
   }
 
   if ( game.dotsRemaining <= 0 ) game.state = 'won';

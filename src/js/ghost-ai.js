@@ -56,6 +56,12 @@ function decideGhost( game, g ) {
   // Sin salida (callejon): permitir el giro de 180.
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
 
+  // Modo fugitivo: direccion aleatoria.
+  if ( game.frightenedTimer > 0 ) {
+    g.dir = choices[ Math.floor( Math.random() * choices.length ) ];
+    return;
+  }
+
   // Fallback interno: kind 'random' y cualquier kind sin objetivo.
   const target = ghostTarget( game, g );
   if ( g.kind === 'random' || !target ) {

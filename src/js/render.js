@@ -70,10 +70,13 @@ function drawDots( ctx, grid ) {
   ctx.fillStyle = DOT_COLOR;
   for ( let y = 0; y < grid.length; y++ ) {
     for ( let x = 0; x < grid[ 0 ].length; x++ ) {
-      if ( grid[ y ][ x ] !== 2 ) continue;
+      const v = grid[ y ][ x ];
+      if ( v !== 2 && v !== 4 ) continue;
       const { cx, cy } = cellCenter( x, y );
+      // Power pellet: dot grande; dot normal: puntito.
+      const r = v === 4 ? 5 : 2.5;
       ctx.beginPath();
-      ctx.arc( cx, cy, 2.5, 0, Math.PI * 2 );
+      ctx.arc( cx, cy, r, 0, Math.PI * 2 );
       ctx.fill();
     }
   }
@@ -163,7 +166,13 @@ function draw( ctx, game, frame ) {
   drawDoor( ctx, grid );
   drawDots( ctx, grid );
   drawPacman( ctx, game.pacman, frame );
-  game.ghosts.forEach( ( g ) => drawGhost( ctx, g, GHOST_COLORS[ g.kind ] || '#ff0000' ) );
+  game.ghosts.forEach( ( g ) => {
+    // Un fantasma comido no se dibuja mientras espera en el pen.
+    if ( g.respawnTimer > 0 ) return;
+    const color =
+      game.frightenedTimer > 0 && !g.inPen ? '#2121ff' : GHOST_COLORS[ g.kind ] || '#ff0000';
+    drawGhost( ctx, g, color );
+  } );
   drawHUD( ctx, game, W );
 }
 
