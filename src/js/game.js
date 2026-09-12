@@ -16,6 +16,9 @@ const GHOST_SPEED = 0.1;    // 1/10 celda/frame
 const FRIGHTENED_DURATION = 360; // 6 s a 60 fps
 const FRIGHTENED_SPEED    = 0.06; // mas lento que GHOST_SPEED (0.1)
 
+const GHOST_RESPAWN_TIME = 180;  // 3 s dentro del pen
+const GHOST_POINTS       = [ 200, 400, 800, 1600 ];
+
 // Salida escalonada del pen: frames (a 60 fps) en que cada fantasma sale,
 // por indice en GHOST_STARTS (0=Blinky, 1=Pinky, 2=Inky, 3=Clyde).
 const GHOST_RELEASE_TIMES = [ 0, 180, 360, 540 ];
@@ -55,6 +58,7 @@ function createGame() {
       speed: GHOST_SPEED,
       kind: g.kind,
       inPen: true,   // nuevo — arranca dentro del pen, estático
+      respawnTimer: 0, // frames restantes dentro del pen tras ser comido
     } ) ),
   };
 }
@@ -186,16 +190,29 @@ function update( game ) {
   movePacman( game );
   game.ghosts.forEach( ( g ) => moveGhost( game, g ) );
 
-  for ( const g of game.ghosts ) {
-    if ( collides( game.pacman, g ) ) {
+  for ( let i = 0; i < game.ghosts.length; i++ ) {
+    const g = game.ghosts[ i ];
+    if ( !collides( game.pacman, g ) ) continue;
+
+    // Modo fugitivo: Pac-Man se come al fantasma.
+    if ( game.frightenedTimer > 0 ) {
+      const pen = GHOST_STARTS[ i ];
+      game.score += GHOST_POINTS[ 0 ] * game.ghostScoreMult;
+      game.ghostScoreMult *= 2;
+      g.respawnTimer = GHOST_RESPAWN_TIME;
+      g.inPen = true;
+      g.x = pen.x;
+      g.y = pen.y;
+      g.dir = 'up';
+    } else {
       game.lives--;
       if ( game.lives <= 0 ) {
         game.state = 'lost';
         return;
       }
       resetPositions( game );
-      break;
     }
+    break;
   }
 
   if ( game.dotsRemaining <= 0 ) game.state = 'won';
