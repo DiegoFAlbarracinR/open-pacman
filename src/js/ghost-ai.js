@@ -14,6 +14,13 @@ function ghostTarget( game, g ) {
   const px = Math.round( game.pacman.x );
   const py = Math.round( game.pacman.y );
 
+  if ( g.kind === 'timid' ) {
+    // Si esta cerca de Pac-Man (distancia Manhattan <= 8) no persigue:
+    // devuelve null para que decideGhost elija direccion aleatoria.
+    const dist = Math.abs( g.x - px ) + Math.abs( g.y - py );
+    if ( dist <= 8 ) return null;
+  }
+
   if ( g.kind === 'ambusher' ) {
     // 4 celdas por delante de Pac-Man; si caen en pared o fuera -> su celda.
     const d = DIRS[ game.pacman.dir ];
@@ -45,13 +52,13 @@ function decideGhost( game, g ) {
   // Sin salida (callejon): permitir el giro de 180.
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
 
-  // Cualquier kind sin IA propia aun cae en el fallback aleatorio.
-  if ( g.kind !== 'hunter' && g.kind !== 'ambusher' && g.kind !== 'cutter' ) {
+  // Fallback interno: kind 'random' y cualquier kind sin objetivo.
+  const target = ghostTarget( game, g );
+  if ( g.kind === 'random' || !target ) {
     g.dir = choices[ Math.floor( Math.random() * choices.length ) ];
     return;
   }
 
-  const target = ghostTarget( game, g );
   const tx = Math.round( target.x );
   const ty = Math.round( target.y );
   let best = choices[ 0 ];
