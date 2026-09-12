@@ -42,6 +42,7 @@ function createGame() {
       dir: 'up',
       speed: GHOST_SPEED,
       kind: g.kind,
+      inPen: true,   // nuevo — arranca dentro del pen, estático
     } ) ),
   };
 }
