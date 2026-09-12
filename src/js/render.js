@@ -167,6 +167,8 @@ function draw( ctx, game, frame ) {
   drawDots( ctx, grid );
   drawPacman( ctx, game.pacman, frame );
   game.ghosts.forEach( ( g ) => {
+    // Un fantasma comido no se dibuja mientras espera en el pen.
+    if ( g.respawnTimer > 0 ) return;
     const color =
       game.frightenedTimer > 0 && !g.inPen ? '#2121ff' : GHOST_COLORS[ g.kind ] || '#ff0000';
     drawGhost( ctx, g, color );

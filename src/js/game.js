@@ -178,9 +178,19 @@ function update( game ) {
   // Decaer el modo fugitivo.
   if ( game.frightenedTimer > 0 ) game.frightenedTimer--;
 
-  // Salida escalonada del pen segun ghostReleaseTimer.
+// Salida escalonada del pen segun ghostReleaseTimer. Un fantasma comido
+  // (respawnTimer > 0) no sale por el release global: lo gobierna su propio
+  // temporizador de reaparicion.
   game.ghosts.forEach( ( g, i ) => {
-    if ( g.inPen && game.ghostReleaseTimer >= GHOST_RELEASE_TIMES[ i ] ) {
+    if ( g.respawnTimer > 0 ) {
+      g.respawnTimer--;
+      if ( g.respawnTimer <= 0 ) {
+        g.respawnTimer = 0;
+        g.inPen = false;
+        g.x = GHOST_EXIT_CELL.x;
+        g.y = GHOST_EXIT_CELL.y;
+      }
+    } else if ( g.inPen && game.ghostReleaseTimer >= GHOST_RELEASE_TIMES[ i ] ) {
       g.inPen = false;
       g.x = GHOST_EXIT_CELL.x;
       g.y = GHOST_EXIT_CELL.y;
