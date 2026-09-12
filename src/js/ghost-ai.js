@@ -2,9 +2,31 @@
 // IA de los fantasmas: decide la direccion de cada fantasma segun su kind.
 // Depende de globals de game.js: DIRS, OPPOSITE, canMove.
 
+// Una celda bloqueante para un objetivo: pared o fuera del laberinto.
+function isBlockingCell( grid, x, y ) {
+  if ( y < 0 || y >= grid.length ) return true;
+  if ( x < 0 || x >= grid[ 0 ].length ) return true;
+  return grid[ y ][ x ] === 1;
+}
+
+// Celda objetivo del fantasma segun su kind.
+function ghostTarget( game, g ) {
+  const px = Math.round( game.pacman.x );
+  const py = Math.round( game.pacman.y );
+
+  if ( g.kind === 'ambusher' ) {
+    // 4 celdas por delante de Pac-Man; si caen en pared o fuera -> su celda.
+    const d = DIRS[ game.pacman.dir ];
+    const tx = px + d.x * 4;
+    const ty = py + d.y * 4;
+    if ( !isBlockingCell( game.grid, tx, ty ) ) return { x: tx, y: ty };
+  }
+
+  return { x: px, y: py };
+}
+
 function decideGhost( game, g ) {
   const grid = game.grid;
-  const p = game.pacman;
 
   const options = Object.keys( DIRS ).filter(
     ( dir ) => dir !== OPPOSITE[ g.dir ] && canMove( grid, g.x, g.y, dir, 'ghost' )
@@ -12,25 +34,28 @@ function decideGhost( game, g ) {
   // Sin salida (callejon): permitir el giro de 180.
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
 
-  if ( g.kind === 'hunter' ) {
-    const px = Math.round( p.x );
-    const py = Math.round( p.y );
-    let best = choices[ 0 ];
-    let bestDist = Infinity;
-    for ( const dir of choices ) {
-      const d = DIRS[ dir ];
-      const nx = g.x + d.x;
-      const ny = g.y + d.y;
-      const dist = Math.abs( nx - px ) + Math.abs( ny - py );
-      if ( dist < bestDist ) {
-        bestDist = dist;
-        best = dir;
-      }
-    }
-    g.dir = best;
-  } else {
+  // Cualquier kind sin IA propia aun cae en el fallback aleatorio.
+  if ( g.kind !== 'hunter' && g.kind !== 'ambusher' ) {
     g.dir = choices[ Math.floor( Math.random() * choices.length ) ];
+    return;
   }
+
+  const target = ghostTarget( game, g );
+  const tx = Math.round( target.x );
+  const ty = Math.round( target.y );
+  let best = choices[ 0 ];
+  let bestDist = Infinity;
+  for ( const dir of choices ) {
+    const d = DIRS[ dir ];
+    const nx = g.x + d.x;
+    const ny = g.y + d.y;
+    const dist = Math.abs( nx - tx ) + Math.abs( ny - ty );
+    if ( dist < bestDist ) {
+      bestDist = dist;
+      best = dir;
+    }
+  }
+  g.dir = best;
 }
 
 window.decideGhost = decideGhost;
