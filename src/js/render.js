@@ -166,7 +166,11 @@ function draw( ctx, game, frame ) {
   drawDoor( ctx, grid );
   drawDots( ctx, grid );
   drawPacman( ctx, game.pacman, frame );
-  game.ghosts.forEach( ( g ) => drawGhost( ctx, g, GHOST_COLORS[ g.kind ] || '#ff0000' ) );
+  game.ghosts.forEach( ( g ) => {
+    const color =
+      game.frightenedTimer > 0 && !g.inPen ? '#2121ff' : GHOST_COLORS[ g.kind ] || '#ff0000';
+    drawGhost( ctx, g, color );
+  } );
   drawHUD( ctx, game, W );
 }
 

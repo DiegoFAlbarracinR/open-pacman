@@ -13,6 +13,9 @@ const OPPOSITE = { left: 'right', right: 'left', up: 'down', down: 'up' };
 const PACMAN_SPEED = 0.125; // 1/8 celda/frame -> alinea cada 8 frames
 const GHOST_SPEED = 0.1;    // 1/10 celda/frame
 
+const FRIGHTENED_DURATION = 360; // 6 s a 60 fps
+const FRIGHTENED_SPEED    = 0.06; // mas lento que GHOST_SPEED (0.1)
+
 // Salida escalonada del pen: frames (a 60 fps) en que cada fantasma sale,
 // por indice en GHOST_STARTS (0=Blinky, 1=Pinky, 2=Inky, 3=Clyde).
 const GHOST_RELEASE_TIMES = [ 0, 180, 360, 540 ];
@@ -36,6 +39,8 @@ function createGame() {
     dotsRemaining: dots,
     grid,
     ghostReleaseTimer: 0,  // frames desde el inicio de la partida
+    frightenedTimer: 0,    // frames restantes del modo fugitivo
+    ghostScoreMult: 1,     // 1,2,4,8 segun fantasmas comidos con el mismo pellet
     pacman: {
       x: PACMAN_START.x,
       y: PACMAN_START.y,
@@ -111,6 +116,8 @@ function movePacman( game ) {
       grid[ p.y ][ p.x ] = 0;
       game.score += 50;
       game.dotsRemaining--;
+      game.frightenedTimer = FRIGHTENED_DURATION;
+      game.ghostScoreMult = 1;
     }
     // Si no puede seguir, se detiene en la celda.
     if ( !canMove( grid, p.x, p.y, p.dir, 'pacman' ) ) return;
@@ -137,8 +144,10 @@ function moveGhost( game, g ) {
   }
 
   const d = DIRS[ g.dir ];
-  g.x += d.x * g.speed;
-  g.y += d.y * g.speed;
+  // En modo fugitivo los fantasmas se mueven mas lento.
+  const speed = game.frightenedTimer > 0 ? FRIGHTENED_SPEED : g.speed;
+  g.x += d.x * speed;
+  g.y += d.y * speed;
   wrapTunnel( g, width );
 }
 
@@ -161,6 +170,9 @@ function collides( a, b ) {
 
 function update( game ) {
   if ( game.state === 'playing' ) game.ghostReleaseTimer++;
+
+  // Decaer el modo fugitivo.
+  if ( game.frightenedTimer > 0 ) game.frightenedTimer--;
 
   // Salida escalonada del pen segun ghostReleaseTimer.
   game.ghosts.forEach( ( g, i ) => {
