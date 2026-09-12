@@ -1,6 +1,6 @@
 # SPEC 02 — Salida escalonada de fantasmas del pen
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-09-12
 > **Objetivo:** Que los fantasmas arranquen dentro del pen y salgan de forma escalonada con un campo `inPen` que controle su estado.

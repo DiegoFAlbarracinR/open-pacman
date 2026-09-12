@@ -46,6 +46,10 @@ function ghostTarget( game, g ) {
 function decideGhost( game, g ) {
   const grid = game.grid;
 
+  // Fantasma dentro del pen: no calcula direccion (defense-in-depth;
+  // moveGhost ya bloquea su movimiento).
+  if ( g.inPen ) return;
+
   const options = Object.keys( DIRS ).filter(
     ( dir ) => dir !== OPPOSITE[ g.dir ] && canMove( grid, g.x, g.y, dir, 'ghost' )
   );
